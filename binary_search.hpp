@@ -26,37 +26,61 @@ DEALINGS IN THE SOFTWARE.*/
 #include <bit>
 #include <functional>
 
-inline size_t bit_floor(size_t i)
-{
-    constexpr int num_bits = sizeof(i) * 8;
-    return size_t(1) << (num_bits - std::countl_zero(i) - 1);
-}
-inline size_t bit_ceil(size_t i)
-{
-    constexpr int num_bits = sizeof(i) * 8;
-    return size_t(1) << (num_bits - std::countl_zero(i - 1));
+// #if _HAS_CXX20
+// inline size_t bit_floor(size_t i)
+// {
+//     constexpr int num_bits = sizeof(i) * 8;
+//     return size_t(1) << (num_bits - std::countl_zero(i) - 1);
+// }
+// inline size_t bit_ceil(size_t i)
+// {
+//     constexpr int num_bits = sizeof(i) * 8;
+//     return size_t(1) << (num_bits - std::countl_zero(i - 1));
+// }
+
+template<typename It, typename T, typename Cmp>
+__declspec(noinline) It standard_lower_bound(It begin, It end, const T& value, Cmp&& compare) {
+    std::size_t count = end - begin;
+    while (count > 0) {
+        auto count_2 = count / 2;
+        const auto mid = begin + count_2;
+
+        if (compare(*mid, value)) { // try top half
+            begin = mid + 1;
+            count -= count_2 + 1;
+        } else {
+            count = count_2;
+        }
+    }
+
+    return begin;
 }
 
 template<typename It, typename T, typename Cmp>
-It branchless_lower_bound(It begin, It end, const T & value, Cmp && compare)
+__declspec(noinline) It branchless_lower_bound(It begin, It end, const T& value, Cmp && compare)
 {
     std::size_t length = end - begin;
+
     if (length == 0)
         return end;
-    std::size_t step = bit_floor(length);
+
+    std::size_t step = std::bit_floor(length);
     if (step != length && compare(begin[step], value))
     {
         length -= step + 1;
         if (length == 0)
             return end;
-        step = bit_ceil(length);
+        step = std::bit_ceil(length);
         begin = end - step;
     }
+
     for (step /= 2; step != 0; step /= 2)
     {
-        if (compare(begin[step], value))
-            begin += step;
+        const auto tmp = begin + step;
+        if (compare(*tmp, value))
+            begin = tmp;
     }
+
     return begin + compare(*begin, value);
 }
 
@@ -64,4 +88,10 @@ template<typename It, typename T>
 It branchless_lower_bound(It begin, It end, const T & value)
 {
     return branchless_lower_bound(begin, end, value, std::less<>{});
+}
+
+template<typename It, typename T>
+It standard_lower_bound(It begin, It end, const T & value)
+{
+    return standard_lower_bound(begin, end, value, std::less<>{});
 }

@@ -1,3 +1,5 @@
+#include <bit>
+
 #include "binary_search.hpp"
 
 struct Standard
@@ -5,7 +7,8 @@ struct Standard
     template<typename It, typename T, typename C>
     auto operator()(It begin, It end, const T & val, C && cmp)
     {
-        return std::lower_bound(begin, end, val, cmp);
+        // return std::lower_bound(begin, end, val, cmp);
+        return standard_lower_bound(begin, end, val, cmp);
     }
 };
 struct Branchless
@@ -70,7 +73,7 @@ void test_counts(int limit = 64)
     for (int i = 0; i < limit; ++i)
     {
         sorted.push_back(i);
-        int compare_limit = 65 - std::countl_zero(bit_ceil(i));
+        int compare_limit = 65 - std::countl_zero(std::bit_ceil(static_cast<unsigned>(i)));
         count = 0;
         found = BinarySearch()(sorted.begin(), sorted.end(), -1, cmp);
         ASSERT_EQ(0, *found) << "i: " << i;
@@ -167,17 +170,17 @@ int main(int argc, char * argv[])
 int main()
 {
     std::vector<float> floats;
-    for (int f = 0.0f; f < 100.0f; ++f)
+    for (float f = 0.0f; f < 100.0f; f += 1.0f)
     {
         floats.push_back(f);
     }
     for (float f = -1.0f; f <= 100.0f; ++f)
     {
-        auto found0 = std::lower_bound(floats.begin(), floats.end(), f);
+        auto found0 = standard_lower_bound(floats.begin(), floats.end(), f);
         auto found1 = branchless_lower_bound(floats.begin(), floats.end(), f);
         if (found0 != found1)
             std::cout << "Error " << f << std::endl;
-        found0 = std::lower_bound(floats.begin(), floats.end(), f + 0.5f);
+        found0 = standard_lower_bound(floats.begin(), floats.end(), f + 0.5f);
         found1 = branchless_lower_bound(floats.begin(), floats.end(), f + 0.5f);
         if (found0 != found1)
             std::cout << "Error " << (f + 0.5f) << std::endl;
