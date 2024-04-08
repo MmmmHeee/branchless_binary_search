@@ -38,8 +38,18 @@ DEALINGS IN THE SOFTWARE.*/
 //     return size_t(1) << (num_bits - std::countl_zero(i - 1));
 // }
 
+#if defined(__clang__)
+#define FORCE_NO_INLINE __declspec(noinline)
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define FORCE_NO_INLINE __attribute__ ((noinline))
+#elif defined(_MSC_VER)
+#define FORCE_NO_INLINE __declspec(noinline)
+#else
+#define FORCE_NO_INLINE
+#endif
+
 template<typename It, typename T, typename Cmp>
-__declspec(noinline) It standard_lower_bound(It begin, It end, const T& value, Cmp&& compare) {
+FORCE_NO_INLINE It standard_lower_bound(It begin, It end, const T& value, Cmp&& compare) {
     std::size_t count = end - begin;
     while (count > 0) {
         auto count_2 = count / 2;
@@ -57,7 +67,7 @@ __declspec(noinline) It standard_lower_bound(It begin, It end, const T& value, C
 }
 
 template<typename It, typename T, typename Cmp>
-__declspec(noinline) It branchless_lower_bound(It begin, It end, const T& value, Cmp && compare)
+FORCE_NO_INLINE It branchless_lower_bound(It begin, It end, const T& value, Cmp && compare)
 {
     std::size_t length = end - begin;
 

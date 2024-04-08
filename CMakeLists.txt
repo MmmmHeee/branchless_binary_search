@@ -11,6 +11,7 @@ macro (set_compile_options TARGET)
     if (MSVC)
         target_compile_options(${TARGET} PRIVATE /Ox)
     else()
+        target_compile_options(${TARGET} PRIVATE -fms-extensions)
         target_compile_options(${TARGET} PRIVATE -O3)
     endif()
 endmacro()
@@ -24,12 +25,14 @@ macro (make_assembly_listing TARGET)
     else()
         # The trick is that makefiles generator defines a [sourcefile].s target for each sourcefile of a target to generate the listing
         # of that file. We hook a command after build to invoke that target and copy the result file to our ourput directory:
-        add_custom_command(
-            TARGET ${TARGET}
-            POST_BUILD
-            COMMAND make ARGS ${TARGET}.cpp.s
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        )
+        if (${CMAKE_GENERATOR} STREQUAL "Unix Makefiles")
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND make ARGS ${TARGET}.cpp.s
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            )
+        endif()
     endif()
 endmacro()
 
@@ -41,7 +44,7 @@ set_target_properties(test PROPERTIES
     CXX_STANDARD 20
 )
 set_compile_options(test)
-# target_compile_definitions(test PRIVATE ENABLE_GTEST)
+target_compile_definitions(test PRIVATE ENABLE_GTEST)
 make_assembly_listing(test)
 
 
