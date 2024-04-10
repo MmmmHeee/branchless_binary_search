@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <concepts>
+#include <iterator>
 #include <vector>
 #include <random>
 
@@ -7,6 +8,8 @@
 #include <benchmark/benchmark.h>
 
 #include "binary_search.hpp"
+
+int seed = 2333;
 
 struct Standard
 {
@@ -31,20 +34,21 @@ template<typename T>
 requires std::is_arithmetic_v<T>
 static std::vector<T> gen_rand_vec(size_t sz) {
     std::vector<T> vec(sz);
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    // std::random_device rd;
+    // std::mt19937 gen(rd);
+    std::mt19937 gen(sz + 2333);
 
     if constexpr (std::is_integral_v<T>) {
         std::uniform_int_distribution<T> dist(std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
         for (size_t i = 0; i < sz; ++i) {
             T val = dist(gen);
-            vec[i] = val * val; // Squaring to skew the distribution
+            vec[i] = val;
         }
     } else if constexpr (std::is_floating_point_v<T>) {
         std::uniform_real_distribution<T> dist(std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
         for (size_t i = 0; i < sz; ++i) {
             T val = dist(gen);
-            vec[i] = val * val; // Squaring to skew the distribution
+            vec[i] = val;
         }
     }
 
@@ -60,10 +64,19 @@ static void bench_bs(benchmark::State &state) {
   auto bench_vec = gen_rand_vec<int64_t>(state.range(0));
   auto bs_alg = BinarySearch {};
 
-  auto search_value  = 0LL;
+  // std::random_device rd;
+  // std::mt19937 gen(rd);
+  std::mt19937 gen(bench_vec.size() + seed);
+  std::uniform_int_distribution<long> dist(std::numeric_limits<long>::min(), std::numeric_limits<long>::max());
 
+  std::vector<int64_t> search_values;
+  search_values.resize(state.max_iterations);
+  std::generate(search_values.begin(), search_values.end(), [&]() { return dist(gen); });
+
+  int i = 0;
   for (auto _ : state) {
-    search_value = (search_value + 1) ^ (uintptr_t)(bench_vec.data());
+    auto search_value = search_values[i++];
+    // search_value = (search_value + 1) ^ (uintptr_t)(bench_vec.data());
     auto find_idx = bs_alg(bench_vec.begin(), bench_vec.end(), search_value, std::less<>{});
     benchmark::DoNotOptimize(find_idx);
   }
