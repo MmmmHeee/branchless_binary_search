@@ -36,7 +36,7 @@ static std::vector<T> gen_rand_vec(size_t sz) {
     std::vector<T> vec(sz);
     // std::random_device rd;
     // std::mt19937 gen(rd);
-    std::mt19937 gen(sz + 2333);
+    std::mt19937 gen(sz + seed);
 
     if constexpr (std::is_integral_v<T>) {
         std::uniform_int_distribution<T> dist(std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
@@ -76,7 +76,7 @@ static void bench_bs(benchmark::State &state) {
   int i = 0;
   for (auto _ : state) {
     auto search_value = search_values[i++];
-    // search_value = (search_value + 1) ^ (uintptr_t)(bench_vec.data());
+    // auto search_value = (search_value + 1) ^ (uintptr_t)(bench_vec.data()); // too easy to for branch prediction
     auto find_idx = bs_alg(bench_vec.begin(), bench_vec.end(), search_value, std::less<>{});
     benchmark::DoNotOptimize(find_idx);
   }

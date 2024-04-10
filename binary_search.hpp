@@ -48,6 +48,11 @@ DEALINGS IN THE SOFTWARE.*/
 #define FORCE_NO_INLINE
 #endif
 
+// #ifdef FORCE_NO_INLINE
+// #undef FORCE_NO_INLINE
+// #define FORCE_NO_INLINE
+// #endif
+
 template<typename It, typename T, typename Cmp>
 FORCE_NO_INLINE It standard_lower_bound(It begin, It end, const T& value, Cmp&& compare) {
     std::size_t count = end - begin;
